@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { axiosInstance } from '../lib/axios.js'
 import toast from 'react-hot-toast'
+import { data } from 'react-router-dom'
 
 export const useAuthStore = create((set) => ({
   authUser: null,
@@ -14,8 +15,26 @@ export const useAuthStore = create((set) => ({
       const res = await axiosInstance.get('/auth/check')
       set({ authUser: res.data })
     } catch (error) {
-      console.error('Auth check failed:', error)
-      set({ authUser: null })
+      // If user is not authenticated, backend returns 401 — treat that as not-logged-in silently.
+      const status = error?.response?.status
+      if (status === 401) {
+        // In dev, provide a mock user so UI development can proceed without sign-in.
+        if (import.meta.env.DEV) {
+          set({
+            authUser: {
+              _id: 'dev-user',
+              fullName: 'Dev User',
+              email: 'dev@example.com',
+              profilePic: '/avatar.png',
+            },
+          })
+        } else {
+          set({ authUser: null })
+        }
+      } else {
+        console.error('Auth check failed:', error)
+        set({ authUser: null })
+      }
     } finally {
       set({ isCheckingAuth: false })
     }
@@ -56,5 +75,7 @@ export const useAuthStore = create((set) => ({
       toast.error(error?.response?.data?.message || 'Logout failed')
     }
   },
-}))
+
+  updateProfile: async(data) => {},
+}));
 

@@ -15,8 +15,11 @@ const App = () => {
   const { authUser, isCheckingAuth, checkAuth } = useAuthStore();
 
   useEffect(() => {
+    // Run auth check once on mount. `checkAuth` is stable in the store but
+    // including it in deps caused repeated calls in development; call once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     checkAuth();
-  }, [checkAuth]);
+  }, []);
 
   console.log({ authUser });
 
